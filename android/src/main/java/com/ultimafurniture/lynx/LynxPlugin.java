@@ -53,10 +53,14 @@ public class LynxPlugin extends Plugin implements RFIDReaderListener {
         call.resolve();
     }
 
-    @PluginMethod
-    public void startRfidScan(PluginCall call) {
+    public void startScan() {
         if (rfidReader != null)
             rfidReader.startScan();
+    }
+
+    @PluginMethod
+    public void startRfidScan(PluginCall call) {
+        startScan();
         call.resolve();
     }
 

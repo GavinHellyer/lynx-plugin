@@ -4,8 +4,7 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.SoundPool;
-
-// import com.ultimafurniture.lynx.R;
+import com.ultimafurniture.lynx.R;
 import com.ultimafurniture.lynx.utils.PreferenceUtil;
 
 /**
@@ -80,9 +79,9 @@ public class Beeper {
          * return;
          * }
          */
-        // mSoundPool.load(context, R.raw.beeper,1);
-        // mSoundPool.load(context, R.raw.beeper, BEEPER);
-        // mSoundPool.load(context, R.raw.beeper_short, BEEPER_SHORT);
+        mSoundPool.load(context, R.raw.beeper, 1);
+        mSoundPool.load(context, R.raw.beeper, BEEPER);
+        mSoundPool.load(context, R.raw.beeper_short, BEEPER_SHORT);
     }
 
     public static void beep(int soundID) {
