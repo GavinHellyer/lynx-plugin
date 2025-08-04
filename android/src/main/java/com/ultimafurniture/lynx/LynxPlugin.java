@@ -1,93 +1,103 @@
 package com.ultimafurniture.lynx;
 
 import android.content.Context;
-import android.content.Intent;
-import android.content.BroadcastReceiver;
-import android.content.IntentFilter;
-import android.net.Uri;
-import android.os.Build;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 
-import androidx.core.content.FileProvider;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
-import com.getcapacitor.annotation.CapacitorPlugin;
 import com.getcapacitor.PluginMethod;
-
-import java.io.File;
-import java.util.List;
-
-import com.ultimafurniture.lynx.models.OperationTag;
-import com.ultimafurniture.lynx.barcode.OrcaAirBarcodeReader;
-import com.ultimafurniture.lynx.barcode.helper.ReaderHelper;
-import com.ultimafurniture.lynx.barcode.helper.TDCodeTagBuffer;
-import com.ultimafurniture.lynx.utils.Beeper;
-import com.ultimafurniture.lynx.models.Barcode;
-import com.ultimafurniture.lynx.barcode.tools.CalculateSpeed;
-import com.ultimafurniture.lynx.utils.AppUtils;
-import com.ultimafurniture.lynx.utils.AppLogger;
-import com.ultimafurniture.lynx.utils.FileUtils;
-import com.ultimafurniture.lynx.models.Inventory;
-import com.ultimafurniture.lynx.utils.Constraints;
-import com.ultimafurniture.lynx.utils.SessionManager;
+import com.getcapacitor.annotation.CapacitorPlugin;
+import com.orhanobut.hawk.Hawk;
+import com.payne.reader.bean.receive.InventoryTag;
+import com.payne.reader.bean.receive.InventoryTagEnd;
+import com.payne.reader.bean.receive.OperationTag;
+import com.ultimafurniture.lynx.acts.SerialPortActivity;
+import com.ultimafurniture.lynx.util.BeeperHelper;
+import com.ultimafurniture.lynx.util.XLog;
 
 @CapacitorPlugin(name = "LynxPlugin")
 public class LynxPlugin extends Plugin implements RFIDReaderListener {
+    private static final String TAG = "LynxPlugin";
 
-    private RFIDReader rfidReader;
-    private SessionManager session;
     private LocalBroadcastManager lbm;
+
+    SerialPortActivity serialPortActivity;
 
     @Override
     public void load() {
         Context context = getContext();
-        session = SessionManager.getInstance(context);
-        initRfidConnection();
+
+        serialPortActivity = SerialPortActivity.getInstance();
+
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                initRfidConnection();
+            }
+        }, 6000);
+    }
+
+    private void initRfidConnection() {
+
+        try {
+
+            serialPortActivity.homeActivity.inventoryTagFragment.setOnRFIDReaderListener(this);
+
+        } catch (Exception e) {
+            XLog.i("error while setting listeerns: " + e.getMessage());
+            System.out.println(e.getStackTrace());
+
+        }
+
     }
 
     @PluginMethod
     public void setRfidMode(PluginCall call) {
-        initRfidConnection();
-        call.resolve();
+        Log.i(TAG, "setRFIDMode Calleddddd");
+        // initRfidConnection();
+
+        call.resolve(new JSObject().put("status", true));
     }
 
     public void startScan() {
-        if (rfidReader != null)
-            rfidReader.startScan();
+        Log.i(TAG, "StartScan called");
+        serialPortActivity.homeActivity.inventoryTagFragment.startStop(true);
+        // rfidReader.startScan();
     }
 
     @PluginMethod
     public void startRfidScan(PluginCall call) {
-        startScan();
+        // startScan();
         call.resolve();
     }
 
     @PluginMethod
     public void getRFOutputPower(PluginCall call) {
-        int power = session.getIntValue("KEY_RF_OUTPUT_POWER_NEW");
-        call.resolve(new JSObject().put("power", power));
+        // rfidReader.getOutputPower();
+        // call.resolve();
+
+        // call.resolve(new JSObject().put("power", power));
+
     }
 
     @PluginMethod
     public void setRFOutputPower(PluginCall call) {
-        int power = call.getInt("power");
-        int status = rfidReader.setRFOutputPower(power);
-        call.resolve(new JSObject().put("status", status));
-    }
-
-    private void initRfidConnection() {
-        rfidReader = new RFIDReader(getContext());
-        rfidReader.connect(Reader.ReaderType.RFID);
-        rfidReader.setOnRFIDReaderListener(this);
+        // int power = call.getInt("power");
+        // int status = rfidReader.setRFOutputPower(power);
+        // call.resolve(new JSObject().put("status", status));
+        call.resolve(new JSObject().put("status", true));
     }
 
     private void releaseRfidConnection() {
-        if (rfidReader != null) {
-            rfidReader.releaseResources();
-            rfidReader = null;
-        }
+        // if (rfidReader != null) {
+        // // rfidReader.releaseResources();
+        // rfidReader = null;
+        // }
     }
 
     private void initializeReceiver() {
@@ -99,26 +109,33 @@ public class LynxPlugin extends Plugin implements RFIDReaderListener {
 
     // Callbacks from RFIDReaderListener
     @Override
-    public void onInventoryTag(Inventory inventory) {
+    public void onInventoryTag(InventoryTag inventory) {
         JSObject data = new JSObject();
-        data.put("epc", inventory.getFormattedEPC());
+        data.put("epc", inventory.getEpc());
         notifyListeners("onInventoryTag", data);
     }
 
     @Override
-    public void onInventoryTagEnd(Inventory.InventoryTagEnd tagEnd) {
-        JSObject data = new JSObject().put("count", tagEnd.mTagCount);
+    public void onInventoryTagEnd(InventoryTagEnd tagEnd) {
+        JSObject data = new JSObject().put("count", tagEnd.getTotalRead());
         notifyListeners("onInventoryTagEnd", data);
     }
 
     @Override
     public void onOperationTag(OperationTag tag) {
-        notifyListeners("onOperationTag", new JSObject().put("epc", tag.strEPC));
+        notifyListeners("onOperationTag", new JSObject().put("epc", tag));
     }
 
     @Override
     public void onConnection(boolean status) {
+        Log.i(TAG, "onConnection: " + status);
         notifyListeners("onConnection", new JSObject().put("status", status));
+    }
+
+    @Override
+    public void onOutputPower(int value) {
+        Log.i(TAG, "onOutputPower" + value);
+        notifyListeners("onOutputPower", new JSObject().put("power", value));
     }
 
     @Override

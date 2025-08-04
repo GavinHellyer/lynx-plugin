@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="file_is">\nThe file is：</string>
+    <string name="firmware_is">\nThe firmware is：</string>
+    <string name="start_update">Start update…</string>
+    <string name="update_error">Update error！</string>
+    <string name="file_check_error">File check error！</string>
+    <string name="start_update_error">Start update error！</string>
+    <string name="update_ending_error">Updating at ending error！</string>
+    <string name="the_chip_type_not_match">The chip type not match！</string>
+    <string name="obtain_version_info_error">Obtain version info error！</string>
+    <string name="encrypted_info">Encrypted mode is inconsistent!</string>
+</resources>
