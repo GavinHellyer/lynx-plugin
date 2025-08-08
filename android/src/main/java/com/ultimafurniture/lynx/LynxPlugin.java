@@ -43,23 +43,18 @@ public class LynxPlugin extends Plugin implements RFIDReaderListener {
     }
 
     private void initRfidConnection() {
-
         try {
-
             serialPortActivity.homeActivity.inventoryTagFragment.setOnRFIDReaderListener(this);
-
         } catch (Exception e) {
             XLog.i("error while setting listeerns: " + e.getMessage());
             System.out.println(e.getStackTrace());
-
         }
-
     }
 
     @PluginMethod
     public void setRfidMode(PluginCall call) {
         Log.i(TAG, "setRFIDMode Calleddddd");
-        // initRfidConnection();
+        initRfidConnection();
 
         call.resolve(new JSObject().put("status", true));
     }
@@ -72,7 +67,7 @@ public class LynxPlugin extends Plugin implements RFIDReaderListener {
 
     @PluginMethod
     public void startRfidScan(PluginCall call) {
-        // startScan();
+        startScan();
         call.resolve();
     }
 
