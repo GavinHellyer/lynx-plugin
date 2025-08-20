@@ -27,24 +27,19 @@ public class LynxPlugin extends Plugin implements RFIDReaderListener {
     private LocalBroadcastManager lbm;
 
     SerialPortActivity serialPortActivity;
+    InventoryTagPlugin inventoryTagPlugin;
 
     @Override
     public void load() {
         Context context = getContext();
-
-        serialPortActivity = SerialPortActivity.getInstance();
-
-        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
-            @Override
-            public void run() {
-                initRfidConnection();
-            }
-        }, 6000);
+        inventoryTagPlugin = InventoryTagPlugin.getInstance();
+        initRfidConnection();
     }
 
     private void initRfidConnection() {
         try {
-            serialPortActivity.homeActivity.inventoryTagFragment.setOnRFIDReaderListener(this);
+            XLog.i("initRfidConnection");
+            inventoryTagPlugin.setOnRFIDReaderListener(this);
         } catch (Exception e) {
             XLog.i("error while setting listeerns: " + e.getMessage());
             System.out.println(e.getStackTrace());
@@ -54,57 +49,43 @@ public class LynxPlugin extends Plugin implements RFIDReaderListener {
     @PluginMethod
     public void setRfidMode(PluginCall call) {
         Log.i(TAG, "setRFIDMode Calleddddd");
-        initRfidConnection();
+//        initRfidConnection();
 
         call.resolve(new JSObject().put("status", true));
     }
 
-    public void startScan() {
+    public void startScan(boolean startStop) {
         Log.i(TAG, "StartScan called");
-        serialPortActivity.homeActivity.inventoryTagFragment.startStop(true);
-        // rfidReader.startScan();
+        serialPortActivity.homeActivity.inventoryTagFragment.startStop(startStop);
     }
 
     @PluginMethod
     public void startRfidScan(PluginCall call) {
-        startScan();
         call.resolve();
     }
 
     @PluginMethod
     public void getRFOutputPower(PluginCall call) {
-        // rfidReader.getOutputPower();
-        // call.resolve();
-
-        // call.resolve(new JSObject().put("power", power));
-
+         call.resolve();
     }
 
     @PluginMethod
     public void setRFOutputPower(PluginCall call) {
-        // int power = call.getInt("power");
-        // int status = rfidReader.setRFOutputPower(power);
-        // call.resolve(new JSObject().put("status", status));
         call.resolve(new JSObject().put("status", true));
     }
 
     private void releaseRfidConnection() {
-        // if (rfidReader != null) {
-        // // rfidReader.releaseResources();
-        // rfidReader = null;
-        // }
+
     }
 
     private void initializeReceiver() {
-        // lbm = LocalBroadcastManager.getInstance(getContext());
-        // IntentFilter intentFilter = new IntentFilter();
-        // intentFilter.addAction(ReaderHelper.BROADCAST_REFRESH_BAR_CODE);
-        // lbm.registerReceiver(barcodeReceiver, intentFilter);
+
     }
 
     // Callbacks from RFIDReaderListener
     @Override
     public void onInventoryTag(InventoryTag inventory) {
+        XLog.i("onInventoryTag: " + inventory);
         JSObject data = new JSObject();
         data.put("epc", inventory.getEpc());
         notifyListeners("onInventoryTag", data);
